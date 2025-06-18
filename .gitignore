@@ -1,0 +1,57 @@
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Archivos temporales
+*.tmp
+*.temp
+*.log
+
+# Archivos de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Archivos de Node.js (si los agregas en el futuro)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Archivos de compilación
+dist/
+build/
+*.min.js
+*.min.css
+
+# Directorios del sistema
+AppData/
+Documents/
+Downloads/
+Pictures/
+Music/
+Videos/
+Desktop/
+Favorites/
+Links/
+Saved Games/
+Searches/
+Videos/
+
+# Archivos de configuración
+*.xml
+.lesshst
+.gitconfig
+
+# Directorios de desarrollo
+.android/
+.cursor/
+.gradle/
+.nbi/
+.redhat/
+.thumbnails/
+
+# Otros
+Contacts/ 

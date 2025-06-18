@@ -2,189 +2,21 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Juego de Laberinto con Kruskal</title>
-  <style>
-    body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; margin-top: 10px; }
-    #laberinto { display: grid; gap: 2px; margin-bottom: 10px; }
-    .celda {
-      width: 30px; height: 30px; text-align: center;
-      line-height: 30px; border: 1px solid #ccc;
-    }
-    .pared { background: black; }
-    .camino { background: white; }
-    .inicio { background: green; }
-    .fin { background: red; }
-    .jugador { background: blue; color: white; font-weight: bold; }
-    .jugado { background: #add8e6; }
-    .optimo { background: yellow; }
-    .controles {
-      display: grid; grid-template-columns: repeat(3, 50px); gap: 5px; margin-top: 10px;
-    }
-    .boton-control {
-      width: 50px; height: 50px; font-size: 20px;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Laberinto - Kruskal & Dijkstra</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <h1>Juego de Laberinto</h1>
+  <h1>Laberinto generado por Kruskal y resuelto por Dijkstra</h1>
   <div id="laberinto"></div>
-  <p>Usa las flechas del teclado o los botones para mover al jugador (azul) hasta la meta (rojo).</p>
   <div class="controles">
-    <button class="boton-control" onclick="mover('up')">⬆️</button>
+    <button class="boton-controlador" onclick="moverJugador('arriba')">⬆️</button>
     <div></div>
-    <button class="boton-control" onclick="mover('right')">➡️</button>
-    <button class="boton-control" onclick="mover('left')">⬅️</button>
+    <button class="boton-controlador" onclick="moverJugador('derecha')">➡️</button>
+    <button class="boton-controlador" onclick="moverJugador('izquierda')">⬅️</button>
     <div></div>
-    <button class="boton-control" onclick="mover('down')">⬇️</button>
+    <button class="boton-controlador" onclick="moverJugador('abajo')">⬇️</button>
   </div>
-  <script>
-    let filas = 21, columnas = 21;
-    let laberinto = [], jugador = [1, 1], fin = [filas - 2, columnas - 2];
-    let recorridoJugador = [];
-    const contenedor = document.getElementById("laberinto");
-
-    function generarLaberinto() {
-      jugador = [1, 1];
-      fin = [filas - 2, columnas - 2];
-      recorridoJugador = [];
-      laberinto = Array.from({ length: filas }, (_, y) => Array.from({ length: columnas }, (_, x) => (x % 2 === 1 && y % 2 === 1 ? 0 : 1)));
-
-      class DisjointSet {
-        constructor(size) {
-          this.parent = new Array(size).fill(0).map((_, i) => i);
-        }
-        find(x) {
-          if (this.parent[x] !== x) this.parent[x] = this.find(this.parent[x]);
-          return this.parent[x];
-        }
-        union(x, y) {
-          const rootX = this.find(x);
-          const rootY = this.find(y);
-          if (rootX !== rootY) this.parent[rootY] = rootX;
-        }
-      }
-
-      const index = (x, y) => (y >> 1) * ((columnas - 1) >> 1) + (x >> 1);
-      const edges = [];
-
-      for (let y = 1; y < filas; y += 2) {
-        for (let x = 1; x < columnas; x += 2) {
-          if (x + 2 < columnas) edges.push([[x, y], [x + 2, y]]);
-          if (y + 2 < filas) edges.push([[x, y], [x, y + 2]]);
-        }
-      }
-
-      for (let i = edges.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [edges[i], edges[j]] = [edges[j], edges[i]];
-      }
-
-      const ds = new DisjointSet(((filas - 1) >> 1) * ((columnas - 1) >> 1));
-
-      for (const [[x1, y1], [x2, y2]] of edges) {
-        const i1 = index(x1, y1);
-        const i2 = index(x2, y2);
-        if (ds.find(i1) !== ds.find(i2)) {
-          ds.union(i1, i2);
-          laberinto[(y1 + y2) >> 1][(x1 + x2) >> 1] = 0;
-        }
-      }
-
-      dibujarLaberinto();
-    }
-
-    function dibujarLaberinto() {
-      contenedor.innerHTML = "";
-      contenedor.style.gridTemplateColumns = `repeat(${columnas}, 30px)`;
-      for (let i = 0; i < filas; i++) {
-        for (let j = 0; j < columnas; j++) {
-          const celda = document.createElement("div");
-          celda.className = "celda " +
-            (i === jugador[0] && j === jugador[1] ? "jugador" :
-             i === fin[0] && j === fin[1] ? "fin" :
-             laberinto[i][j] === 1 ? "pared" : "camino");
-          celda.id = `celda-${i}-${j}`;
-          contenedor.appendChild(celda);
-        }
-      }
-      recorridoJugador.forEach(([x, y]) => {
-        const celda = document.getElementById(`celda-${x}-${y}`);
-        if (celda) celda.classList.add("jugado");
-      });
-    }
-
-    function mover(direccion) {
-      const [x, y] = jugador;
-      let [nx, ny] = [x, y];
-      if (direccion === 'up') nx--;
-      if (direccion === 'down') nx++;
-      if (direccion === 'left') ny--;
-      if (direccion === 'right') ny++;
-      intentarMover(nx, ny);
-    }
-
-    function intentarMover(nx, ny) {
-      if (nx >= 0 && ny >= 0 && nx < filas && ny < columnas && laberinto[nx][ny] === 0) {
-        recorridoJugador.push([...jugador]);
-        jugador = [nx, ny];
-        dibujarLaberinto();
-        if (nx === fin[0] && ny === fin[1]) {
-          mostrarCaminoOptimo();
-          setTimeout(() => alert("¡Ganaste!"), 100);
-        }
-      }
-    }
-
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowUp") mover('up');
-      if (e.key === "ArrowDown") mover('down');
-      if (e.key === "ArrowLeft") mover('left');
-      if (e.key === "ArrowRight") mover('right');
-    });
-
-    function mostrarCaminoOptimo() {
-      const dist = Array.from({ length: filas }, () => Array(columnas).fill(Infinity));
-      const prev = Array.from({ length: filas }, () => Array(columnas).fill(null));
-      dist[1][1] = 0;
-      const visitados = new Set();
-
-      while (true) {
-        let minDist = Infinity;
-        let actual = null;
-        for (let i = 0; i < filas; i++) {
-          for (let j = 0; j < columnas; j++) {
-            if (!visitados.has(`${i},${j}`) && dist[i][j] < minDist) {
-              minDist = dist[i][j];
-              actual = [i, j];
-            }
-          }
-        }
-        if (!actual || actual[0] === fin[0] && actual[1] === fin[1]) break;
-        const [x, y] = actual;
-        visitados.add(`${x},${y}`);
-
-        for (let [dx, dy] of [[0,1],[1,0],[-1,0],[0,-1]]) {
-          const nx = x + dx, ny = y + dy;
-          if (nx >= 0 && ny >= 0 && nx < filas && ny < columnas && laberinto[nx][ny] === 0) {
-            if (dist[x][y] + 1 < dist[nx][ny]) {
-              dist[nx][ny] = dist[x][y] + 1;
-              prev[nx][ny] = [x, y];
-            }
-          }
-        }
-      }
-
-      let [cx, cy] = fin;
-      while (prev[cx][cy]) {
-        const [px, py] = prev[cx][cy];
-        const celda = document.getElementById(`celda-${px}-${py}`);
-        if (celda && (px !== 1 || py !== 1)) celda.classList.add("optimo");
-        [cx, cy] = [px, py];
-      }
-    }
-
-    generarLaberinto();
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
